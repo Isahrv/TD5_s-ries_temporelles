@@ -185,17 +185,54 @@ mse_RW_5d <- mse(wheat_ts, rw_forecasts_5d)
 
 # Mincer-Zarnovitz
 
+## Fonction de test de Mincer-Zarnowitz
+
+```{r}
+mz_test <- function(y, yhat) {
+  model <- lm(y ~ yhat)
+  summary(model)
+}
+```
+
 ## Modèle A10
 
 ```{r}
-
+MZ_A10_1d <- mz_test(wheat_ts, a10_forecasts_1d)
+MZ_A10_5d <- mz_test(wheat_ts, a10_forecasts_5d)
 ```
 
 ## Modèle A3
 
 ```{r}
-
+MZ_A3_1d <- mz_test(wheat_ts, a3_forecasts_1d)
+MZ_A3_5d <- mz_test(wheat_ts, a3_forecasts_5d)
 ```
+
+## Marche aléatoire
+
+```{r}
+MZ_RW_1d <- mz_test(wheat_ts, rw_forecasts_1d)
+MZ_RW_5d <- mz_test(wheat_ts, rw_forecasts_5d)
+```
+
+## Résultats 
+
+```{r}
+print("Test Mincer-Zarnowitz pour A10")
+print(MZ_A10_1d)
+print(MZ_A10_5d)
+
+print("Test Mincer-Zarnowitz pour A3")
+print(MZ_A3_1d)
+print(MZ_A3_5d)
+
+print("Test Mincer-Zarnowitz pour RW")
+print(MZ_RW_1d)
+print(MZ_RW_5d)
+```
+
+Le test de Mincer-Zarnowitz permet de tester si les prévisions sont non biaisées et efficaces par rapport aux observations réelles.
+L'hypothèse nulle correspond à des prévisions parfaites ; si H0 est rejettée, le modèle de prévision est biaisée.
 
 # Statistique de Diebold et Mariano
 
