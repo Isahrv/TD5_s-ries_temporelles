@@ -1,0 +1,131 @@
+---
+format: 
+  pdf:
+    documentclass: article
+    classoption: ["a4paper", "12pt", "fleqn"]
+    geometry: top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm
+    number-sections: true
+    number-depth: 8
+    toc: true
+header-includes: |
+  \usepackage{hyperref}  % Liens cliquables
+  \hypersetup{hidelinks}  % Désactive complètement la mise en couleur des liens
+editor: 
+  markdown: 
+    wrap: 72
+---
+
+\begin{titlepage}
+    \begin{center}
+        {\LARGE \textbf{Séries temporelles univariées}}\\
+        \vspace{0.5cm}
+        {\Large M1 ECAP -- TD5 -- Année 2024/2025}\\
+        
+        \vspace{2cm}
+        
+          {\Large \textbf{TD5 : Évaluation de modèles de prévision}}\\
+        \vspace{0.5cm}
+        \textit{Responsable d'enseignement : Benoît SÉVI}\\
+        \href{mailto:benoit.sevi@univ-nantes.fr}{benoit.sevi@univ-nantes.fr}\\
+        
+        \vspace{1.5cm}
+        
+        {\large \textbf{ERNOUL DE LA PROVOTÉ Arthur, HERVÉ Isaline}}
+        
+        \vfill
+        
+        {\large \today}
+        
+    \end{center}
+\end{titlepage}
+\begingroup
+\hypersetup{linkcolor=black}
+\tableofcontents
+\endgroup
+
+\newpage
+
+# Chargement des packages nécessaires
+
+```{r}
+#| output: false
+
+# libraries isaline
+library(readxl)
+
+
+
+# libraries arthur
+
+
+
+
+
+```
+
+# Import des données
+
+```{r}
+wheat <- read_excel("wheat_support5_STU.xlsx")
+```
+
+# Création d'une ts
+
+```{r}
+wheat_ts <- ts(wheat$return, start = c(2006, 1), frequency = 365)
+```
+
+# Modélisation ARMA
+
+```{r}
+
+```
+
+# Série de prévision
+
+## Sur les 10 dernières années : 
+
+### Prévisions en t+1
+
+```{r}
+
+```
+
+### Prévisions en t+5
+
+```{r}
+
+```
+
+## Sur les 3 dernières années : 
+
+### Prévisions en t+1
+
+```{r}
+
+```
+
+### Prévisions en t+5
+
+```{r}
+
+```
+
+# Mincer-Zarnovitz
+
+```{r}
+
+```
+
+# Statistique de Diebold et Mariano
+
+```{r}
+
+```
+
+# Comparaison des performances des modèles
+
+```{r}
+
+```
+
