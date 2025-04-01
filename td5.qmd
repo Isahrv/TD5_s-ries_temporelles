@@ -52,7 +52,10 @@ editor:
 
 # libraries isaline
 library(readxl)
-
+library(forecast)
+library(sandwich)
+library(lmtest)
+library(tseries)
 
 
 # libraries arthur
@@ -72,29 +75,64 @@ wheat <- read_excel("wheat_support5_STU.xlsx")
 # Création d'une ts
 
 ```{r}
-wheat_ts <- ts(wheat$return, start = c(2006, 1), frequency = 365)
+wheat_ts <- ts(wheat$return, start = c(2006, 1), end = c(2022, 1), frequency = 252)
 ```
 
 # Modélisation ARMA
 
-```{r}
+## Analyse des autocorrélations
 
+```{r}
+# Analyse des autocorrélations
+acf(wheat_ts, main="Autocorrélation de la série")
+pacf(wheat_ts, main="Autocorrélation partielle de la série")
+```
+
+
+```{r}
+# Sélection du meilleur modèle ARMA basé sur AIC/BIC
+meilleur_modele <- auto.arima(wheat_ts, seasonal = FALSE, stepwise = FALSE, approximation = FALSE)
+print(meilleur_modele)
+```
+
+D'après auto arima, le meilleur modèle est un modèle ARMA(2, 3), que nous retiendrons donc pour la suite de l'analyse.
+
+```{r}
+# Fonction pour ajuster le modèle sélectionné et faire des prévisions
+arma_forecast <- function(y, model, h) {
+  forecast(model, h = h)$mean
+}
 ```
 
 # Série de prévision
+
+```{r}
+# Rolling windows forecasts
+rolling_forecast <- function(y, model, h, window) {
+  n <- length(y)
+  forecasts <- rep(NA, n)
+  
+  for (i in (window + 1):(n - h)) {
+    y_train <- y[(i - window):(i - 1)]
+    model_fit <- Arima(y_train, model=best_model)
+    forecasts[i + h] <- arma_forecast(y_train, model_fit, h)
+  }
+  return(forecasts)
+}
+```
 
 ## Sur les 10 dernières années : 
 
 ### Prévisions en t+1
 
 ```{r}
-
+a10_forecasts_1d <- rolling_forecast(wheat_ts, meilleur_modele, h = 1, window = 10 * 252)
 ```
 
 ### Prévisions en t+5
 
 ```{r}
-
+a10_forecasts_5d <- rolling_forecast(wheat_ts, meilleur_modele, h = 5, window = 10 * 252)
 ```
 
 ## Sur les 3 dernières années : 
@@ -102,20 +140,44 @@ wheat_ts <- ts(wheat$return, start = c(2006, 1), frequency = 365)
 ### Prévisions en t+1
 
 ```{r}
-
+a3_forecasts_1d <- rolling_forecast(wheat_ts, meilleur_modele, h = 1, window = 3 * 252)
 ```
 
 ### Prévisions en t+5
 
 ```{r}
-
+a3_forecasts_5d <- rolling_forecast(wheat_ts, meilleur_modele, h = 5, window = 3 * 252)
 ```
 
 # Modèle marche aléatoire
 
-```{r}
+## Prévisions en t+1
 
+```{r}
+rw_forecasts_1d <- lag(wheat_ts, -1)
 ```
+
+## Prévisions en t+5
+
+```{r}
+rw_forecasts_5d <- lag(wheat_ts, -5)
+```
+
+# Comparaison des erreurs
+
+```{r}
+# Fonction de perte (ex. erreur quadratique moyenne - MSE)
+mse <- function(y, yhat) { mean((y - yhat)^2, na.rm = TRUE) }
+
+mse_A10_1d <- mse(y, a10_forecasts_1d)
+mse_A3_1d <- mse(y, a3_forecasts_1d)
+mse_RW_1d <- mse(y, rw_forecasts_1d)
+
+mse_A10_5d <- mse(y, a10_forecasts_5d)
+mse_A3_5d <- mse(y, a3_forecasts_5d)
+mse_RW_5d <- mse(y, rw_forecasts_5d)
+```
+
 
 # Mincer-Zarnovitz
 
