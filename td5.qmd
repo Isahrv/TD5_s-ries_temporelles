@@ -113,11 +113,27 @@ wheat_ts <- ts(wheat$return, start = c(2006, 1), frequency = 365)
 
 # Mincer-Zarnovitz
 
+## Modèle A10
+
+```{r}
+
+```
+
+## Modèle A3
+
 ```{r}
 
 ```
 
 # Statistique de Diebold et Mariano
+
+## Modèle A10
+
+```{r}
+
+```
+
+## Modèle A3
 
 ```{r}
 
