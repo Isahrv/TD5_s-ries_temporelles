@@ -111,6 +111,12 @@ wheat_ts <- ts(wheat$return, start = c(2006, 1), frequency = 365)
 
 ```
 
+# Modèle marche aléatoire
+
+```{r}
+
+```
+
 # Mincer-Zarnovitz
 
 ## Modèle A10
