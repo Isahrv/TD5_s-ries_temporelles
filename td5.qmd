@@ -84,18 +84,22 @@ wheat_ts <- ts(wheat$return, start = c(2006, 1), end = c(2022, 1), frequency = 2
 
 ```{r}
 # Analyse des autocorrélations
+par(mfrow=c(1, 2))
 acf(wheat_ts, main="Autocorrélation de la série")
 pacf(wheat_ts, main="Autocorrélation partielle de la série")
 ```
 
+L’ACF décroît rapidement vers zéro, ce qui suggère un modèle AR.
+
+La PACF montre quelques valeurs significatives aux premiers retards, indiquant un possible AR(p).
 
 ```{r}
 # Sélection du meilleur modèle ARMA basé sur AIC/BIC
-meilleur_modele <- auto.arima(wheat_ts, seasonal = FALSE, stepwise = FALSE, approximation = FALSE)
-print(meilleur_modele)
+ar_model <- auto.arima(wheat_ts, max.p = 2, max.q = 0, seasonal = FALSE, stepwise = FALSE, approximation = FALSE)
+print(ar_model)
 ```
 
-D'après auto arima, le meilleur modèle est un modèle ARMA(2, 3), que nous retiendrons donc pour la suite de l'analyse.
+D'après auto arima, le meilleur modèle est un modèle ARIMA(0, 0, 0). Donc nousne retiendrons donc pas pour la suite de l'analyse mais un modèle AR(1).
 
 ```{r}
 # Fonction pour ajuster le modèle sélectionné et faire des prévisions
@@ -114,7 +118,7 @@ rolling_forecast <- function(y, model, h, window) {
   
   for (i in (window + 1):(n - h)) {
     y_train <- y[(i - window):(i - 1)]
-    model_fit <- Arima(y_train, model=best_model)
+    model_fit <- Arima(y_train, model=meilleur_modele)
     forecasts[i + h] <- arma_forecast(y_train, model_fit, h)
   }
   return(forecasts)
@@ -169,13 +173,13 @@ rw_forecasts_5d <- lag(wheat_ts, -5)
 # Fonction de perte (ex. erreur quadratique moyenne - MSE)
 mse <- function(y, yhat) { mean((y - yhat)^2, na.rm = TRUE) }
 
-mse_A10_1d <- mse(wheats_ts, a10_forecasts_1d)
-mse_A3_1d <- mse(wheats_ts, a3_forecasts_1d)
-mse_RW_1d <- mse(wheats_ts, rw_forecasts_1d)
+mse_A10_1d <- mse(wheat_ts, a10_forecasts_1d)
+mse_A3_1d <- mse(wheat_ts, a3_forecasts_1d)
+mse_RW_1d <- mse(wheat_ts, rw_forecasts_1d)
 
-mse_A10_5d <- mse(wheats_ts, a10_forecasts_5d)
-mse_A3_5d <- mse(wheats_ts, a3_forecasts_5d)
-mse_RW_5d <- mse(wheats_ts, rw_forecasts_5d)
+mse_A10_5d <- mse(wheat_ts, a10_forecasts_5d)
+mse_A3_5d <- mse(wheat_ts, a3_forecasts_5d)
+mse_RW_5d <- mse(wheat_ts, rw_forecasts_5d)
 ```
 
 
@@ -195,21 +199,42 @@ mse_RW_5d <- mse(wheats_ts, rw_forecasts_5d)
 
 # Statistique de Diebold et Mariano
 
-## Modèle A10
-
 ```{r}
+# Charger les bibliothèques nécessaires
+library(forecast)
+library(sandwich)
+library(lmtest)
+
+# Fonction de perte MAE
+mae <- function(y, yhat) { mean(abs(y - yhat), na.rm = TRUE) }
+
+# Calculer les pertes pour chaque modèle
+loss_A10_1d_mse <- (wheat_ts - a10_forecasts_1d)^2
+loss_RW_1d_mse <- (wheat_ts - rw_forecasts_1d)^2
+
+loss_A10_1d_mae <- abs(wheat_ts - a10_forecasts_1d)
+loss_RW_1d_mae <- abs(wheat_ts - rw_forecasts_1d)
+
+# Calculer la différence des pertes
+delta_mse <- loss_RW_1d_mse - loss_A10_1d_mse
+delta_mae <- loss_RW_1d_mae - loss_A10_1d_mae
+
+# Estimer la régression
+reg_mse <- lm(delta_mse ~ 1)
+reg_mae <- lm(delta_mae ~ 1)
+
+# Estimer la covariance des erreurs avec Newey-West
+cov_mse <- NeweyWest(reg_mse, lag = 5)
+cov_mae <- NeweyWest(reg_mae, lag = 5)
+
+# Réaliser le test t
+test_mse <- coeftest(reg_mse, cov_mse)
+test_mae <- coeftest(reg_mae, cov_mae)
+
+# Afficher les résultats
+print(test_mse)
+print(test_mae)
 
 ```
 
-## Modèle A3
-
-```{r}
-
-```
-
-# Comparaison des performances des modèles
-
-```{r}
-
-```
 
