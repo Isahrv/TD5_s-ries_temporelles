@@ -169,13 +169,13 @@ rw_forecasts_5d <- lag(wheat_ts, -5)
 # Fonction de perte (ex. erreur quadratique moyenne - MSE)
 mse <- function(y, yhat) { mean((y - yhat)^2, na.rm = TRUE) }
 
-mse_A10_1d <- mse(y, a10_forecasts_1d)
-mse_A3_1d <- mse(y, a3_forecasts_1d)
-mse_RW_1d <- mse(y, rw_forecasts_1d)
+mse_A10_1d <- mse(wheats_ts, a10_forecasts_1d)
+mse_A3_1d <- mse(wheats_ts, a3_forecasts_1d)
+mse_RW_1d <- mse(wheats_ts, rw_forecasts_1d)
 
-mse_A10_5d <- mse(y, a10_forecasts_5d)
-mse_A3_5d <- mse(y, a3_forecasts_5d)
-mse_RW_5d <- mse(y, rw_forecasts_5d)
+mse_A10_5d <- mse(wheats_ts, a10_forecasts_5d)
+mse_A3_5d <- mse(wheats_ts, a3_forecasts_5d)
+mse_RW_5d <- mse(wheats_ts, rw_forecasts_5d)
 ```
 
 
