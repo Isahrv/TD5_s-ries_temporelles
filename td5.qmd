@@ -56,7 +56,7 @@ library(forecast)
 library(sandwich)
 library(lmtest)
 library(tseries)
-
+library(ggplot2)
 
 # libraries arthur
 
@@ -77,6 +77,23 @@ wheat <- read_excel("wheat_support5_STU.xlsx")
 ```{r}
 wheat_ts <- ts(wheat$return, start = c(2006, 1), end = c(2022, 1), frequency = 252)
 ```
+
+# Graphique de la série pour les 10 dernières années
+
+```{r}
+wheat_ts_10y <- window(wheat_ts, start = c(2012, 1), end = c(2022, 1))
+
+par(mfrow = c(1, 1))
+plot(wheat_ts_10y, 
+     main = "Évolution des rendements du blé (2012-2022)", 
+     xlab = "Année", 
+     ylab = "Rendement", 
+     col = "blue", 
+     lwd = 2, 
+     type = "l")
+```
+
+Les données étant journalières, il est difficile d'observer des variations pertinentes. Néanmoins, nous pouvons remarqué que de 2017 à 2019, les valeurs des rendements du blé semblent fluctuer de façons plus importantes que sur les autres périodes.
 
 # Modélisation ARMA
 
@@ -168,7 +185,54 @@ rw_forecasts_1d <- lag(wheat_ts, -1)
 rw_forecasts_5d <- lag(wheat_ts, -5)
 ```
 
+# Observations des prévisions sur 10 ans
+
+```{r}
+# Nouvelle fonction de rolling window afin d'extraire la valeur de phi
+rolling_phi <- function(y, window, h) {
+  n <- length(y)
+  phi_values <- rep(NA, n - window)
+  
+  for (i in 1:(n - window)) {
+    y_train <- y[i:(i + window - 1)]
+    model_fit <- Arima(y_train, order = c(1, 0, 0))
+    
+    phi_values[i] <- coef(model_fit)[1]
+  }
+  
+  return(phi_values)
+}
+
+# Calcul du phi pour t+1 et t+5, qu'on met ensuite dans un dataframe pour faire un graphique
+phi_1d <- rolling_phi(wheat_ts, window = 10 * 252, h = 1)
+phi_5d <- rolling_phi(wheat_ts, window = 10 * 252, h = 5)
+
+df_phi <- data.frame(
+  Time = seq(from = start(wheat_ts)[1] + 10, to = end(wheat_ts)[1], length.out = length(phi_1d)),
+  Phi_1d = phi_1d,
+  Phi_5d = phi_5d
+)
+
+ggplot(df_phi, aes(x = Time)) +
+  geom_line(aes(y = Phi_1d, color = "t+1"), size = 1) +
+  geom_line(aes(y = Phi_5d, color = "t+5"), size = 1, linetype = "dashed") +
+  scale_color_manual(values = c("t+1" = "orange", "t+5" = "blue")) +
+  labs(title = "Évolution du coefficient Phi (AR(1)) sur 10 ans",
+       x = "Année",
+       y = "Phi (coefficient AR(1))",
+       color = "Horizon de prévision") +
+  theme_minimal()
+```
+
+En observant l'évolution de phi, nous pouvons évaluer la stabilité et la prévisibilité des rendements de blé au fil du temps.
+
+Nous constatons notamment qu'entre 2018 et 2019, 𝜙 diminue fortement. Ainsi, les rendements deviennent moins prévisibles avec ce modèle AR(1).
+
+Cependant, il y a une nette augmentation de 𝜙 à partir de 2019, ce qui signifie que les rendements actuels sont de plus en plus liés aux rendements passés, donc plus prévisibles.
+
 # Mincer-Zarnovitz
+
+Nous allons à présent passer au test de Mincer-Zarnowitz, qui permet de vérifier si les prévisions sont non biaisées et efficaces par rapport aux observations réelles, en régressant les valeurs prédites sur les valeurs actuelles.
 
 ## Fonction de test de Mincer-Zarnowitz
 
@@ -205,19 +269,18 @@ mz_test_rw <- function(y, yhat) {
   summary(model)
 }
 
-MZ_RW_1d <- mz_test(wheat_ts, rw_forecasts_1d)
-MZ_RW_5d <- mz_test(wheat_ts, rw_forecasts_5d)
+MZ_RW_1d <- mz_test_rw(wheat_ts, rw_forecasts_1d)
+MZ_RW_5d <- mz_test_rw(wheat_ts, rw_forecasts_5d)
 print(MZ_RW_1d)
 print(MZ_RW_5d)
 ```
 
 ## Résultats 
 
-Le test de Mincer-Zarnowitz permet de vérifier si les prévisions sont non biaisées et efficaces par rapport aux observations réelles, en régressant les valeurs prédites sur les valeurs actuelles.
-L'hypothèse nulle correspond à des prévisions parfaites ; si H0 est rejettée, le modèle de prévision est biaisée.
+L'hypothèse nulle du test correspond à des prévisions parfaites ; si H0 est rejettée, le modèle de prévision est biaisée.
 Si alpha = 0 et Beta = 1, les prévisions sont non biaisées et efficaces.
 
-Ici, les prévisions étant faites sur des rendements, il est évident qu'elles ne seront pas forcément proches des valeurs réelles, puisque cela reste difficile à prévoir.
+Ici, les prévisions étant faites sur des rendements, il est évident qu'elles ne seront pas forcément proches des valeurs réelles, puisque cela reste difficile à prévoir. Nous nous attendons alors à ce que les prévisions pour les modèles de marches aléatoires soient plus proches de la réalité.
 
 Tout d'abord, pour les modèles A10, en commençant par le modèle de prévision en t+1, le modèle semble très mauvais, puisque le Beta est de -5.26, ce qui est très éloigné de 1. De plus, la p-value est  inférieure à 0.05, indiquant la présence potentielle d'un biais. Pour le modèle de prévision en t+5, le Beta est également très éloigné de 1, cependant, la p-value est supérieure à 0.05, donc il n'y a pas de biais dans les prévisions.
 
