@@ -197,8 +197,8 @@ mse_RW_5d <- mse_vect(wheat_ts,  rw_forecasts_5d)
 ## Fonction de test de Mincer-Zarnowitz
 
 ```{r}
-mz_test <- function(y, yhat) {
-  model <- lm(y ~ yhat)
+mz_test_a <- function(y) {
+  model <- lm(y$actual ~ y$forecast)
   summary(model)
 }
 ```
@@ -206,42 +206,48 @@ mz_test <- function(y, yhat) {
 ## Modèle A10
 
 ```{r}
-MZ_A10_1d <- mz_test(wheat_ts, a10_forecasts_1d)
-MZ_A10_5d <- mz_test(wheat_ts, a10_forecasts_5d)
+MZ_A10_1d <- mz_test_a(a10_forecasts_1d)
+MZ_A10_5d <- mz_test_a(a10_forecasts_5d)
+print(MZ_A10_1d)
+print(MZ_A10_5d)
 ```
 
 ## Modèle A3
 
 ```{r}
-MZ_A3_1d <- mz_test(wheat_ts, a3_forecasts_1d)
-MZ_A3_5d <- mz_test(wheat_ts, a3_forecasts_5d)
+MZ_A3_1d <- mz_test_a(a3_forecasts_1d)
+MZ_A3_5d <- mz_test_a(a3_forecasts_5d)
+print(MZ_A3_1d)
+print(MZ_A3_5d)
 ```
 
 ## Marche aléatoire
 
 ```{r}
+mz_test_rw <- function(y, yhat) {
+  model <- lm(y ~ yhat)
+  summary(model)
+}
+
 MZ_RW_1d <- mz_test(wheat_ts, rw_forecasts_1d)
 MZ_RW_5d <- mz_test(wheat_ts, rw_forecasts_5d)
-```
-
-## Résultats 
-
-```{r}
-print("Test Mincer-Zarnowitz pour A10")
-print(MZ_A10_1d)
-print(MZ_A10_5d)
-
-print("Test Mincer-Zarnowitz pour A3")
-print(MZ_A3_1d)
-print(MZ_A3_5d)
-
-print("Test Mincer-Zarnowitz pour RW")
 print(MZ_RW_1d)
 print(MZ_RW_5d)
 ```
 
-Le test de Mincer-Zarnowitz permet de tester si les prévisions sont non biaisées et efficaces par rapport aux observations réelles.
+## Résultats 
+
+Le test de Mincer-Zarnowitz permet de vérifier si les prévisions sont non biaisées et efficaces par rapport aux observations réelles, en régressant les valeurs prédites sur les valeurs actuelles.
 L'hypothèse nulle correspond à des prévisions parfaites ; si H0 est rejettée, le modèle de prévision est biaisée.
+Si alpha = 0 et Beta = 1, les prévisions sont non biaisées et efficaces.
+
+Ici, les prévisions étant faites sur des rendements, il est évident qu'elles ne seront pas forcément proches des valeurs réelles, puisque cela reste difficile à prévoir.
+
+Tout d'abord, pour les modèles A10, en commençant par le modèle de prévision en t+1, le modèle semble très mauvais, puisque le Beta est de -5.26, ce qui est très éloigné de 1. De plus, la p-value est  inférieure à 0.05, indiquant la présence potentielle d'un biais. Pour le modèle de prévision en t+5, le Beta est également très éloigné de 1, cependant, la p-value est supérieure à 0.05, donc il n'y a pas de biais dans les prévisions.
+
+En ce qui concerne les modèles effectués sur 3 ans de données, alpha est proche de 0, et le Beta est entre - 1 et 1, ce qui montre qu'il existe une différence entre les valeurs prédites et réelles. Cependant, la p-value étant supérieure à 0.05 pour les deux horizons observés, il n'y a pas de biais.
+
+Pour les modèles des marches aléatoires, les Beta sont très proches de 1, et alpha est proche de 0, donc les prévisions sont bien alignées avec les valeurs réelles. Cependant, les p-values sont inférieures à 0.05, alors il peut y avoir biais.
 
 # Statistique de Diebold et Mariano
 
