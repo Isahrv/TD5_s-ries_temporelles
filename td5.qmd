@@ -311,18 +311,24 @@ diebold_mariano_test <- function(actual, f1, f2, loss = "mse") {
   test <- coeftest(dm_model, vcov = NeweyWest(dm_model))
   return(test)
 }
+```
 
+
+(Hypothèse nulle) : Il n’y a pas de différence significative entre les erreurs de prévision des modèles A10 et Random Walk (RW).
+
+```{r}
 # Comparaison A10 vs marche aléatoire avec horizon 1 
 cat("Diebold-Mariano A10 vs Marche aléatoire (h=1, MSE) :\n")
 diebold_mariano_test(a10_forecasts_1d$actual, a10_forecasts_1d$forecast, rw_forecasts_1d,loss = "mse")
 ```
-
+Le test montre que A10 est significativement meilleur que le modèle Random Walk en termes de MSE à un horizon de 1 jours (p < 0.001).
 ```{r}
 #| echo: false
 # Comparaison A10 vs marche aléatoire avec horizon 5 
 cat("Diebold-Mariano A10 vs Marche aléatoire (h=5, MSE) :\n")
 diebold_mariano_test(a10_forecasts_5d$actual, a10_forecasts_5d$forecast, rw_forecasts_5d,loss = "mse")
 ```
+Le test montre que A10 est significativement meilleur que le modèle Random Walk en termes de MSE à un horizon de 5 jours (p < 0.001).
 
 ```{r}
 #| echo: false
@@ -330,6 +336,7 @@ diebold_mariano_test(a10_forecasts_5d$actual, a10_forecasts_5d$forecast, rw_fore
 cat("Diebold-Mariano A3 vs Marche aléatoire (h=1, MSE) :\n")
 diebold_mariano_test(a3_forecasts_1d$actual, a3_forecasts_1d$forecast, rw_forecasts_1d,loss = "mse")
 ```
+Le test montre que A3 est significativement meilleur que le modèle Random Walk en termes de MSE à un horizon de 1 jours (p < 0.001).
 
 ```{r}
 #| echo: false
@@ -337,4 +344,5 @@ diebold_mariano_test(a3_forecasts_1d$actual, a3_forecasts_1d$forecast, rw_foreca
 cat("Diebold-Mariano A3 vs Marche aléatoire (h=5, MSE) :\n")
 diebold_mariano_test(a3_forecasts_5d$actual, a3_forecasts_5d$forecast, rw_forecasts_5d,loss = "mse")
 ```
+Le test montre que A3 est significativement meilleur que le modèle Random Walk en termes de MSE à un horizon de 5 jours (p < 0.001).
 
