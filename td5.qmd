@@ -232,85 +232,46 @@ wheat_ts <- ts(wheat$return, start = c(2006, 1), end = c(2022, 1), frequency = 2
 ```
 
 
-# Comparaison des erreurs
-
-```{r}
-# Charger les bibliothèques nécessaires
-library(forecast)
-library(sandwich)
-library(lmtest)
-
-# Fonction de perte (ex. erreur quadratique moyenne - MSE)
-mse_data <- function(y) { mean((y$actual- y$forecast)^2, na.rm = TRUE) }
-
-mse_A10_1d <- mse( a10_forecasts_1d)
-mse_A3_1d <- mse( a3_forecasts_1d)
-
-
-mse_A10_5d <- mse( a10_forecasts_5d)
-mse_A3_5d <- mse( a3_forecasts_5d)
-```
+# Comparaison
+## Test de diebold
 
 
 ```{r}
-# fonction de pert pour marche aléatoire
-mse_vect <- function(y, yhat) { mean((y - yhat)^2, na.rm = TRUE) }
+diebold_mariano_test <- function(actual, f1, f2, loss = "mse") {
+  if (loss == "mse") {
+    d <- (actual - f1)^2 - (actual - f2)^2
+  } else if (loss == "mae") {
+    d <- abs(actual - f1) - abs(actual - f2)
+  } 
+  
+  dm_model <- lm(d ~ 1)
+  test <- coeftest(dm_model, vcov = NeweyWest(dm_model))
+  return(test)
+}
 
-
-mse_RW_1d <- mse_vect(wheat_ts,  rw_forecasts_1d)
-mse_RW_5d <- mse_vect(wheat_ts,  rw_forecasts_5d)
-```
-
-
-
-```{r}
-# Charger les bibliothèques nécessaires
-library(forecast)
-library(sandwich)
-library(lmtest)
-
-
-# Fonction de perte MAE
-## Pour marche aléatoire
-mae_vect <- function(y, yhat) { mean(abs(y - yhat), na.rm = TRUE) }
-
-# Calculer les pertes pour chaque modèle
-
-mae_RW_1d <- mae_vect(wheat_ts,  rw_forecasts_1d)
-mae_RW_5d <- mae_vect(wheat_ts,  rw_forecasts_5d)
+# Comparaison A10 vs marche aléatoire avec horizon 1 
+cat("Diebold-Mariano A10 vs Marche aléatoire (h=1, MSE) :\n")
+diebold_mariano_test(a10_forecasts_1d$actual, a10_forecasts_1d$forecast, rw_forecasts_1d,loss = "mse")
 ```
 
 ```{r}
-# Fonction de perte MAE
-
-mae <- function(y) { mean(abs(y$actual- y$forecast), na.rm = TRUE) }
-
-
-mae_A10_1d <- mae(a10_forecasts_1d)
-mae_A3_1d <- mae(a3_forecasts_1d)
-
-
-mae_A10_5d <- mae(a10_forecasts_5d)
-mae_A3_5d <- mae(a3_forecasts_5d)
-
-
+#| echo: false
+# Comparaison A10 vs marche aléatoire avec horizon 5 
+cat("Diebold-Mariano A10 vs Marche aléatoire (h=5, MSE) :\n")
+diebold_mariano_test(a10_forecasts_5d$actual, a10_forecasts_5d$forecast, rw_forecasts_5d,loss = "mse")
 ```
 
 ```{r}
-# Calculer les différences de perte
-mae_diff_1d <- a10_forecasts_1d$forecast - a3_forecasts_1d$forecast
-mae_diff_5d <- a10_forecasts_5d$forecast - a3_forecasts_5d$forecast
-
-
-reg_1d <- lm(mae_diff_1d ~ 1)
-reg_5d <- lm(mae_diff_5d ~ 1)
-
-test_1d <- coeftest(reg_1d, vcov = NeweyWest(reg_1d))
-test_1d
-
-test_5d <- coeftest(reg_5d, vcov = NeweyWest(reg_5d))
-test_5d
-
+#| echo: false
+# Comparaison A3 vs marche aléatoire avec horizon 1 
+cat("Diebold-Mariano A3 vs Marche aléatoire (h=1, MSE) :\n")
+diebold_mariano_test(a3_forecasts_1d$actual, a3_forecasts_1d$forecast, rw_forecasts_1d,loss = "mse")
 ```
 
+```{r}
+#| echo: false
+# Comparaison A3 vs marche aléatoire avec horizon 5 
+cat("Diebold-Mariano A3 vs Marche aléatoire (h=5, MSE) :\n")
+diebold_mariano_test(a3_forecasts_5d$actual, a3_forecasts_5d$forecast, rw_forecasts_5d,loss = "mse")
+```
 
