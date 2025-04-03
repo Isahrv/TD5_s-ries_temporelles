@@ -95,8 +95,8 @@ La PACF montre quelques valeurs significatives aux premiers retards, indiquant u
 
 ```{r}
 # Sélection du meilleur modèle ARMA basé sur AIC/BIC
-ar_model <- auto.arima(wheat_ts, max.p = 2, max.q = 0, seasonal = FALSE, stepwise = FALSE, approximation = FALSE)
-print(ar_model)
+meilleur_modele <- auto.arima(wheat_ts, max.p = 2, max.q = 0, seasonal = FALSE, stepwise = FALSE, approximation = FALSE)
+print(meilleur_modele)
 ```
 
 D'après auto arima, le meilleur modèle est un modèle ARIMA(0, 0, 0). Donc nousne retiendrons donc pas pour la suite de l'analyse mais un modèle AR(1).
@@ -112,17 +112,32 @@ arma_forecast <- function(y, model, h) {
 
 ```{r}
 # Rolling windows forecasts
-rolling_forecast <- function(y, model, h, window) {
-  n <- length(y)
-  forecasts <- rep(NA, n)
+library(forecast)
+
+
+# Paramètres
+horizons <- c(1, 5)
+rolling_window_10 <- 10 * 252  # approx 252 jours par an
+rolling_window_3  <- 3 * 252
+
+# Fonction de rolling forecast
+rolling_forecast <- function(series, window_size, h = 1) {
+  n <- length(series)
+  forecasts <- rep(NA, n - window_size - h + 1)
+  actuals <- rep(NA, n - window_size - h + 1)
   
-  for (i in (window + 1):(n - h)) {
-    y_train <- y[(i - window):(i - 1)]
-    model_fit <- Arima(y_train, model=meilleur_modele)
-    forecasts[i + h] <- arma_forecast(y_train, model_fit, h)
+  for (i in 1:(n - window_size - h + 1)) {
+    train <- series[i:(i + window_size - 1)]
+    model <- Arima(train, order = c(1, 0, 0))  # AR(1) par défaut
+    forecast_i <- forecast(model, h = h)
+    
+    forecasts[i] <- forecast_i$mean[h]
+    actuals[i] <- series[i + window_size + h - 1]
   }
-  return(forecasts)
+  
+  return(data.frame(actual = actuals, forecast = forecasts))
 }
+
 ```
 
 ## Sur les 10 dernières années : 
@@ -130,13 +145,13 @@ rolling_forecast <- function(y, model, h, window) {
 ### Prévisions en t+1
 
 ```{r}
-a10_forecasts_1d <- rolling_forecast(wheat_ts, meilleur_modele, h = 1, window = 10 * 252)
+a10_forecasts_1d <- rolling_forecast(wheat_ts, rolling_window_10, h = 1)
 ```
 
 ### Prévisions en t+5
 
 ```{r}
-a10_forecasts_5d <- rolling_forecast(wheat_ts, meilleur_modele, h = 5, window = 10 * 252)
+a10_forecasts_5d <- rolling_forecast(wheat_ts, rolling_window_10, h = 5)
 ```
 
 ## Sur les 3 dernières années : 
@@ -144,13 +159,13 @@ a10_forecasts_5d <- rolling_forecast(wheat_ts, meilleur_modele, h = 5, window = 
 ### Prévisions en t+1
 
 ```{r}
-a3_forecasts_1d <- rolling_forecast(wheat_ts, meilleur_modele, h = 1, window = 3 * 252)
+a3_forecasts_1d <- rolling_forecast(wheat_ts, rolling_window_3, h = 1)
 ```
 
 ### Prévisions en t+5
 
 ```{r}
-a3_forecasts_5d <- rolling_forecast(wheat_ts, meilleur_modele, h = 5, window = 3 * 252)
+a3_forecasts_5d <- rolling_forecast(wheat_ts, rolling_window_3, h = 5)
 ```
 
 # Modèle marche aléatoire
