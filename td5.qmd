@@ -168,30 +168,6 @@ rw_forecasts_1d <- lag(wheat_ts, -1)
 rw_forecasts_5d <- lag(wheat_ts, -5)
 ```
 
-# Comparaison des erreurs
-
-```{r}
-# Fonction de perte (ex. erreur quadratique moyenne - MSE)
-mse_data <- function(y) { mean((y$actual- y$forecast)^2, na.rm = TRUE) }
-
-mse_A10_1d <- mse( a10_forecasts_1d)
-mse_A3_1d <- mse( a3_forecasts_1d)
-
-
-mse_A10_5d <- mse( a10_forecasts_5d)
-mse_A3_5d <- mse( a3_forecasts_5d)
-```
-
-
-```{r}
-mse_vect <- function(y, yhat) { mean((y - yhat)^2, na.rm = TRUE) }
-
-
-mse_RW_1d <- mse_vect(wheat_ts,  rw_forecasts_1d)
-mse_RW_5d <- mse_vect(wheat_ts,  rw_forecasts_5d)
-```
-
-
 # Mincer-Zarnovitz
 
 ## Fonction de test de Mincer-Zarnowitz
@@ -246,40 +222,88 @@ L'hypothèse nulle correspond à des prévisions parfaites ; si H0 est rejettée
 # Statistique de Diebold et Mariano
 
 ```{r}
+wheat_ts <- ts(wheat$return, start = c(2006, 1), end = c(2022, 1), frequency = 252)
+```
+
+
+# Comparaison des erreurs
+
+```{r}
 # Charger les bibliothèques nécessaires
 library(forecast)
 library(sandwich)
 library(lmtest)
 
+# Fonction de perte (ex. erreur quadratique moyenne - MSE)
+mse_data <- function(y) { mean((y$actual- y$forecast)^2, na.rm = TRUE) }
+
+mse_A10_1d <- mse( a10_forecasts_1d)
+mse_A3_1d <- mse( a3_forecasts_1d)
+
+
+mse_A10_5d <- mse( a10_forecasts_5d)
+mse_A3_5d <- mse( a3_forecasts_5d)
+```
+
+
+```{r}
+# fonction de pert pour marche aléatoire
+mse_vect <- function(y, yhat) { mean((y - yhat)^2, na.rm = TRUE) }
+
+
+mse_RW_1d <- mse_vect(wheat_ts,  rw_forecasts_1d)
+mse_RW_5d <- mse_vect(wheat_ts,  rw_forecasts_5d)
+```
+
+
+
+```{r}
+# Charger les bibliothèques nécessaires
+library(forecast)
+library(sandwich)
+library(lmtest)
+
+
 # Fonction de perte MAE
-mae <- function(y, yhat) { mean(abs(y - yhat), na.rm = TRUE) }
+## Pour marche aléatoire
+mae_vect <- function(y, yhat) { mean(abs(y - yhat), na.rm = TRUE) }
 
 # Calculer les pertes pour chaque modèle
-loss_A10_1d_mse <- (wheat_ts - a10_forecasts_1d)^2
-loss_RW_1d_mse <- (wheat_ts - rw_forecasts_1d)^2
 
-loss_A10_1d_mae <- abs(wheat_ts - a10_forecasts_1d)
-loss_RW_1d_mae <- abs(wheat_ts - rw_forecasts_1d)
+mae_RW_1d <- mae_vect(wheat_ts,  rw_forecasts_1d)
+mae_RW_5d <- mae_vect(wheat_ts,  rw_forecasts_5d)
+```
 
-# Calculer la différence des pertes
-delta_mse <- loss_RW_1d_mse - loss_A10_1d_mse
-delta_mae <- loss_RW_1d_mae - loss_A10_1d_mae
+```{r}
+# Fonction de perte MAE
 
-# Estimer la régression
-reg_mse <- lm(delta_mse ~ 1)
-reg_mae <- lm(delta_mae ~ 1)
+mae <- function(y) { mean(abs(y$actual- y$forecast), na.rm = TRUE) }
 
-# Estimer la covariance des erreurs avec Newey-West
-cov_mse <- NeweyWest(reg_mse, lag = 5)
-cov_mae <- NeweyWest(reg_mae, lag = 5)
 
-# Réaliser le test t
-test_mse <- coeftest(reg_mse, cov_mse)
-test_mae <- coeftest(reg_mae, cov_mae)
+mae_A10_1d <- mae(a10_forecasts_1d)
+mae_A3_1d <- mae(a3_forecasts_1d)
 
-# Afficher les résultats
-print(test_mse)
-print(test_mae)
+
+mae_A10_5d <- mae(a10_forecasts_5d)
+mae_A3_5d <- mae(a3_forecasts_5d)
+
+
+```
+
+```{r}
+# Calculer les différences de perte
+mae_diff_1d <- a10_forecasts_1d$forecast - a3_forecasts_1d$forecast
+mae_diff_5d <- a10_forecasts_5d$forecast - a3_forecasts_5d$forecast
+
+
+reg_1d <- lm(mae_diff_1d ~ 1)
+reg_5d <- lm(mae_diff_5d ~ 1)
+
+test_1d <- coeftest(reg_1d, vcov = NeweyWest(reg_1d))
+test_1d
+
+test_5d <- coeftest(reg_5d, vcov = NeweyWest(reg_5d))
+test_5d
 
 ```
 
