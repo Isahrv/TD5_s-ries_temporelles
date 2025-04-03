@@ -6,7 +6,7 @@ format:
     geometry: top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm
     number-sections: true
     number-depth: 8
-    toc: true
+    toc: false
 header-includes: |
   \usepackage{hyperref}  % Liens cliquables
   \hypersetup{hidelinks}  % Désactive complètement la mise en couleur des liens
@@ -50,20 +50,12 @@ editor:
 ```{r}
 #| output: false
 
-# libraries isaline
 library(readxl)
 library(forecast)
 library(sandwich)
 library(lmtest)
 library(tseries)
 library(ggplot2)
-
-# libraries arthur
-
-
-
-
-
 ```
 
 # Import des données
@@ -203,12 +195,14 @@ rolling_phi <- function(y, window, h) {
   return(phi_values)
 }
 
-# Calcul du phi pour t+1 et t+5, qu'on met ensuite dans un dataframe pour faire un graphique
+# Calcul du phi pour t+1 et t+5, qu'on met 
+# ensuite dans un dataframe pour faire un graphique
 phi_1d <- rolling_phi(wheat_ts, window = 10 * 252, h = 1)
 phi_5d <- rolling_phi(wheat_ts, window = 10 * 252, h = 5)
 
 df_phi <- data.frame(
-  Time = seq(from = start(wheat_ts)[1] + 10, to = end(wheat_ts)[1], length.out = length(phi_1d)),
+  Time = seq(from = start(wheat_ts)[1] + 10, to = end(wheat_ts)[1], 
+             length.out = length(phi_1d)),
   Phi_1d = phi_1d,
   Phi_5d = phi_5d
 )
