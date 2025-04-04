@@ -284,14 +284,7 @@ Pour les modèles des marches aléatoires, les Beta sont très proches de 1, et 
 
 # Statistique de Diebold et Mariano
 
-```{r}
-wheat_ts <- ts(wheat$return, start = c(2006, 1), end = c(2022, 1), frequency = 252)
-```
-
-
-# Comparaison
-## Test de diebold
-
+## Création de la fonction du test
 
 ```{r}
 diebold_mariano_test <- function(actual, f1, f2, loss = "mse") {
@@ -307,36 +300,52 @@ diebold_mariano_test <- function(actual, f1, f2, loss = "mse") {
 }
 ```
 
-
-(Hypothèse nulle) : Il n’y a pas de différence significative entre les erreurs de prévision des modèles A10 et Random Walk (RW).
+## Comparaison A10 vs marche aléatoire avec horizon 1
 
 ```{r}
-# Comparaison A10 vs marche aléatoire avec horizon 1 
 cat("Diebold-Mariano A10 vs Marche aléatoire (h=1, MSE) :\n")
 diebold_mariano_test(a10_forecasts_1d$actual, a10_forecasts_1d$forecast, rw_forecasts_1d,loss = "mse")
 ```
+
+L'hypothèse nulle du test est qu'il n’y a pas de différence significative entre les erreurs de prévision des modèles A10 et Random Walk (RW).
 Le test montre que A10 est significativement meilleur que le modèle Random Walk en termes de MSE à un horizon de 1 jours (p < 0.001).
+
+## Comparaison A10 vs marche aléatoire avec horizon 5 
+
 ```{r}
 #| echo: false
-# Comparaison A10 vs marche aléatoire avec horizon 5 
 cat("Diebold-Mariano A10 vs Marche aléatoire (h=5, MSE) :\n")
 diebold_mariano_test(a10_forecasts_5d$actual, a10_forecasts_5d$forecast, rw_forecasts_5d,loss = "mse")
 ```
+
 Le test montre que A10 est significativement meilleur que le modèle Random Walk en termes de MSE à un horizon de 5 jours (p < 0.001).
+
+## Comparaison A3 vs marche aléatoire avec horizon 1 
 
 ```{r}
 #| echo: false
-# Comparaison A3 vs marche aléatoire avec horizon 1 
 cat("Diebold-Mariano A3 vs Marche aléatoire (h=1, MSE) :\n")
 diebold_mariano_test(a3_forecasts_1d$actual, a3_forecasts_1d$forecast, rw_forecasts_1d,loss = "mse")
 ```
+
 Le test montre que A3 est significativement meilleur que le modèle Random Walk en termes de MSE à un horizon de 1 jours (p < 0.001).
+
+## Comparaison A3 vs marche aléatoire avec horizon 5
 
 ```{r}
 #| echo: false
-# Comparaison A3 vs marche aléatoire avec horizon 5 
 cat("Diebold-Mariano A3 vs Marche aléatoire (h=5, MSE) :\n")
 diebold_mariano_test(a3_forecasts_5d$actual, a3_forecasts_5d$forecast, rw_forecasts_5d,loss = "mse")
 ```
+
 Le test montre que A3 est significativement meilleur que le modèle Random Walk en termes de MSE à un horizon de 5 jours (p < 0.001).
 
+# Conclusion
+
+D'après les différents résultats obtenus sur les test de Mincer-Zarnovitz et de Diebold-Mariano, nous pouvons conclure que le modèle A3 semble être le plus optimal. 
+
+D'après le test de Diebold et Mariano, les modèles AR(1) (A10 et A3) sont préférables à la marche aléatoire, puisqu'ils montrent de meilleures prévisions.
+
+Ensuite, A3 semble plus stable que A10, car il n'a pas de biais détecté par le test de Mincer Zarnovitz.
+
+A l'horizon t+1 et t+5, A3 est donc statistiquement supérieur à la marche aléatoire et ne présente pas de biais significatif.
